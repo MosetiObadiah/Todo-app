@@ -1,25 +1,31 @@
 package com.moseti.todo.ui.screens
 
-import android.text.format.DateFormat
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Button
-import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -27,35 +33,42 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.moseti.todo.DateRangePickerModal
+import com.moseti.todo.TaskRepository
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
+data class Tasks(
+    val title: String,
+    val description: String,
+    val taskPeriod: String,
+    val dueDate: Long?,
+    val priority: Boolean
+)
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AddTasks(innerPaddingValues: PaddingValues) {
+fun AddTasks(onSave: (String, String, String, Long?, Boolean) -> Unit) {
     var title by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
 
+    val radioOptions = listOf("daily", "weekly", "monthly")
+    val (selectedOption, onOptionSelected) = remember { mutableStateOf(radioOptions[0]) }
+
     // State to control the visibility of the DateRangePickerModal
-    var showDateRangePicker by remember { mutableStateOf(false) }
+    var showDatePicker by remember { mutableStateOf(false) }
     // State to hold the selected date range
-    var selectedDateRange by remember { mutableStateOf<Pair<Long?, Long?>>(null to null) }
+    // Set default due date as current date
+    val currentDateMillis = System.currentTimeMillis()
+    var selectedDueDate by remember { mutableStateOf<Long?>(currentDateMillis) }
 
-    var priorityTask by remember { mutableStateOf(true) }
+    var priorityTask by remember { mutableStateOf(false) }
 
-    Column(
-        Modifier.fillMaxSize()
-            .padding(innerPaddingValues)
-    ) {
-        Text(
-            "Add Task",
-            modifier = Modifier.padding(5.dp),
-            fontSize = 30.sp,
-            fontWeight = FontWeight.ExtraBold,
-        )
-
+    Column{
         OutlinedTextField(
             value = title,
             onValueChange = { title = it },
@@ -66,33 +79,59 @@ fun AddTasks(innerPaddingValues: PaddingValues) {
 
         OutlinedTextField(
             value = description,
-            onValueChange = { description = it },
+            onValueChange = {
+                description = it },
             modifier = Modifier.padding(5.dp, 0.dp, 5.dp, 0.dp)
                 .fillMaxWidth(),
             label = { Text("Description") }
         )
 
+        Row(
+            horizontalArrangement = Arrangement.Start,
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth()
+                .selectableGroup()
+        ) {
+            radioOptions.forEach { text ->
+                Row(
+                    Modifier
+                        .height(56.dp)
+                        .selectable(
+                            selected = (text == selectedOption),
+                            onClick = { onOptionSelected(text) },
+                            role = Role.RadioButton
+                        )
+                        .padding(bottom = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    RadioButton(
+                        selected = (text == selectedOption),
+                        onClick = null // null recommended for accessibility with screen readers
+                    )
+                    Text(
+                        text = text,
+                        style = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier.padding(start = 2.dp, end = 18.dp)
+                    )
+                }
+            }
+        }
+
         Button(
-            onClick = { showDateRangePicker = true },
+            onClick = { showDatePicker = true },
             modifier = Modifier.padding(5.dp)
                 .fillMaxWidth(),
             shape = RoundedCornerShape(4.dp)
         ) {
-            Text("Select Date Range")
+            Text("Due Date")
         }
 
-        // State to hold formatted date strings
-        var startingDate by remember { mutableStateOf("Select starting date") }
-        var endingDate by remember { mutableStateOf("Select end date") }
+        // State to hold formatted date string
+        var dueDateString by remember { mutableStateOf("Select due date") }
 
         // Extract start and end dates
-        selectedDateRange.let { (start, end) ->
-            if (start != null) {
-                startingDate = DateFormat.format("MM/dd/yyyy", start).toString()
-            }
-            if (end != null) {
-                endingDate = DateFormat.format("MM/dd/yyyy", end).toString()
-            }
+        selectedDueDate?.let {
+            dueDateString = convertMillisToDate(it)
         }
 
         Row(modifier = Modifier.fillMaxWidth(),
@@ -100,51 +139,44 @@ fun AddTasks(innerPaddingValues: PaddingValues) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             OutlinedTextField(
-                value = startingDate,
+                value = dueDateString,
                 onValueChange = { /*Read only*/ },
                 modifier = Modifier
                     .padding(5.dp)
                     .weight(1f)
                     .clickable {
-                        //TODO on click launch date picker
+                        showDatePicker = true
                     },
                 readOnly = true,
-                label = { Text("Start") }
-            )
-
-            Text(
-                "to",
-                modifier = Modifier.padding(5.dp),
-                fontSize = 15.sp,
-                fontWeight = FontWeight.ExtraBold,
-                textAlign = TextAlign.Center
-            )
-
-            OutlinedTextField(
-                value = endingDate,
-                onValueChange = {/*Read only*/ },
-                modifier = Modifier
-                    .padding(5.dp)
-                    .weight(1f)
-                    .clickable {
-                        //TODO on click launch date picker
-                    },
-                readOnly = true,
-                label = { Text("End") }
+                label = { Text("due date") }
             )
         }
 
-        // Show the DateRangePickerModal when showDateRangePicker is true
-        if (showDateRangePicker) {
-            DateRangePickerModal(
-                onDateRangeSelected = { dateRange ->
-                    selectedDateRange = dateRange
-                    showDateRangePicker = false // Dismiss modal after selection
+        // Show the DatePickerDialog when showDatePicker is true
+        if (showDatePicker) {
+            val datePickerState = rememberDatePickerState()
+            DatePickerDialog(
+                onDismissRequest = {
+                    showDatePicker = false
                 },
-                onDismiss = {
-                    showDateRangePicker = false // Dismiss modal on cancel
+                confirmButton = {
+                    TextButton(onClick = {
+                        selectedDueDate = datePickerState.selectedDateMillis
+                        showDatePicker = false
+                    }) {
+                        Text("OK")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = {
+                        showDatePicker = false
+                    }) {
+                        Text("Cancel")
+                    }
                 }
-            )
+            ) {
+                DatePicker(state = datePickerState)
+            }
         }
 
         Row(
@@ -155,7 +187,6 @@ fun AddTasks(innerPaddingValues: PaddingValues) {
         ) {
             Text(
                 "High Priority",
-                modifier = Modifier.padding(5.dp),
                 fontSize = 22.sp,
                 fontWeight = FontWeight.Bold,
             )
@@ -178,26 +209,12 @@ fun AddTasks(innerPaddingValues: PaddingValues) {
                 }
             )
         }
-
-        Row(
-            modifier = Modifier.fillMaxWidth()
-                .padding(5.dp),
-            horizontalArrangement = Arrangement.SpaceAround ,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            FilledTonalButton(
-                onClick = { /*TODO cancel task entry*/ },
-                shape = RoundedCornerShape(5.dp)
-            ) {
-                Text("Cancel")
-            }
-
-            FilledTonalButton(
-                onClick = { /*Todo save task entry*/ },
-                shape = RoundedCornerShape(5.dp)
-            ) {
-                Text("Save")
-            }
-        }
     }
+    //send the entries to dialog save button
+    onSave(title, description, selectedOption, selectedDueDate, priorityTask)
+}
+
+fun convertMillisToDate(millis: Long): String {
+    val formatter = SimpleDateFormat("MM/dd/yyyy", Locale.getDefault())
+    return formatter.format(Date(millis))
 }
