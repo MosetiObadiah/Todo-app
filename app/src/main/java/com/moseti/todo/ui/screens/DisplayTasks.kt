@@ -28,15 +28,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.moseti.todo.viewmodels.AddTasksViewModel
 import com.moseti.todo.viewmodels.Task
 
 @Composable
-fun ShowTasks(innerPadding: PaddingValues) {
-    val viewModel :AddTasksViewModel = viewModel()
-    val tasks = viewModel.myTasks
-    println("display $tasks.toString()")
+fun ShowTasks(addTaskviewmodel: AddTasksViewModel, innerPadding: PaddingValues) {
+
+    val tasks = addTaskviewmodel.myTasks
+    println("Tasks on display : $addTaskviewmodel.myTasks")
     LazyColumn(
         modifier = Modifier.padding(innerPadding),
         contentPadding = PaddingValues(8.dp)

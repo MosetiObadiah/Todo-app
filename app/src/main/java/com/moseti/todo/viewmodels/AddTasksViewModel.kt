@@ -2,6 +2,7 @@ package com.moseti.todo.viewmodels
 
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 
@@ -27,7 +28,7 @@ class AddTasksViewModel : ViewModel() {
         private set
 
 
-    private val _myTasks = mutableListOf<Task>()
+    private val _myTasks = mutableStateListOf<Task>()
     val myTasks: List<Task> get() = _myTasks
 
     fun updateTitle(newTitle: String) {

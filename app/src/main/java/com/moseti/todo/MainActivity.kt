@@ -279,7 +279,7 @@ class MainActivity : ComponentActivity() {
                                     AddTasks()
                                 }
                                 composable<DisplayTasks>{
-                                    ShowTasks(innerPadding)
+                                    ShowTasks(addTaskviewmodel, innerPadding)
                                 }
                                 composable<Settings>{
                                     SettingsScreen(innerPadding)

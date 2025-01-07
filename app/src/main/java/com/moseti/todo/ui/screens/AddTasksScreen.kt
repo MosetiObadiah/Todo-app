@@ -110,7 +110,7 @@ fun AddTasks() {
                 ) {
                     RadioButton(
                         selected = (text == selectedOption),
-                        onClick = null // null recommended for accessibility with screen readers
+                        onClick = null // null for accessibility with screen readers
                     )
                     Text(
                         text = text,
@@ -135,7 +135,7 @@ fun AddTasks() {
 
         // Extract start and end dates
 
-        selectedDueDate?.let {
+        selectedDueDate.let {
             dueDateString = convertMillisToDate(it)
         }
 
