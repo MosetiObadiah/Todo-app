@@ -28,38 +28,27 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.moseti.todo.viewmodels.AddTasksViewModel
+import com.moseti.todo.viewmodels.Task
 
 @Composable
-fun ShowTasks(tasks: List<Tasks>, innerPadding: PaddingValues) {
-    if (tasks.isEmpty()) {
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                text = "No tasks available",
-                style = MaterialTheme.typography.bodyLarge,
-                textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(innerPadding)
-            )
-        }
-    } else {
-        LazyColumn(
-            modifier = Modifier.padding(innerPadding),
-            contentPadding = PaddingValues(8.dp)
-        ) {
-            items(tasks, key = { it.title + it.dueDate.toString() }) { task ->
-                TaskCard(task = task)
-            }
+fun ShowTasks(innerPadding: PaddingValues) {
+    val viewModel :AddTasksViewModel = viewModel()
+    val tasks = viewModel.myTasks
+    println("display $tasks.toString()")
+    LazyColumn(
+        modifier = Modifier.padding(innerPadding),
+        contentPadding = PaddingValues(8.dp)
+    ) {
+        items(tasks, key = { it.title + it.dueDate }) { task ->
+            TaskCard(task = task)
         }
     }
 }
 
 @Composable
-fun TaskCard(task: Tasks) {
+fun TaskCard(task: Task) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -82,7 +71,7 @@ fun TaskCard(task: Tasks) {
                     fontWeight = FontWeight.Bold,
                     fontSize = 18.sp
                 )
-                if (task.priority) {
+                if (task.priority == "true") {
                     Icon(
                         imageVector = Icons.Filled.Star,
                         contentDescription = "Priority Task",
@@ -105,7 +94,7 @@ fun TaskCard(task: Tasks) {
             ) {
 
                 Text(
-                    text = "Due Date: ${task.dueDate?.let { convertMillisToDate(it) }}",
+                    text = "Due Date: ${task.dueDate.toLongOrNull()?.let { convertMillisToDate(it) }}",
                     style = MaterialTheme.typography.bodySmall,
                     color = Color.Gray
                 )

@@ -28,6 +28,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -37,41 +38,44 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.moseti.todo.TaskRepository
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.moseti.todo.viewmodels.AddTasksViewModel
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-data class Tasks(
-    val title: String,
-    val description: String,
-    val taskPeriod: String,
-    val dueDate: Long?,
-    val priority: Boolean
-)
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AddTasks(onSave: (String, String, String, Long?, Boolean) -> Unit) {
+fun AddTasks() {
+    val addTaskviewmodel = viewModel<AddTasksViewModel>()
+
     var title by remember { mutableStateOf("") }
+    addTaskviewmodel.updateTitle(title)
+
     var description by remember { mutableStateOf("") }
+    addTaskviewmodel.updateDescription(description)
 
     val radioOptions = listOf("daily", "weekly", "monthly")
-    val (selectedOption, onOptionSelected) = remember { mutableStateOf(radioOptions[0]) }
+    var selectedOption by remember { mutableStateOf(radioOptions[0]) }
+    addTaskviewmodel.updateFrequency(selectedOption)
 
     // State to control the visibility of the DateRangePickerModal
     var showDatePicker by remember { mutableStateOf(false) }
     // State to hold the selected date range
     // Set default due date as current date
     val currentDateMillis = System.currentTimeMillis()
-    var selectedDueDate by remember { mutableStateOf<Long?>(currentDateMillis) }
+    var selectedDueDate by remember { mutableLongStateOf(currentDateMillis) }
+    addTaskviewmodel.updateDueDate(convertMillisToDate(selectedDueDate))
 
     var priorityTask by remember { mutableStateOf(false) }
+    addTaskviewmodel.updatePriority(priorityTask.toString())
 
     Column{
         OutlinedTextField(
             value = title,
-            onValueChange = { title = it },
+            onValueChange = {
+                title = it
+            },
             modifier = Modifier.padding(5.dp, 5.dp, 5.dp, 0.dp)
                 .fillMaxWidth(),
             label = { Text("Title") }
@@ -98,7 +102,7 @@ fun AddTasks(onSave: (String, String, String, Long?, Boolean) -> Unit) {
                         .height(56.dp)
                         .selectable(
                             selected = (text == selectedOption),
-                            onClick = { onOptionSelected(text) },
+                            onClick = { selectedOption = text },
                             role = Role.RadioButton
                         )
                         .padding(bottom = 4.dp),
@@ -130,6 +134,7 @@ fun AddTasks(onSave: (String, String, String, Long?, Boolean) -> Unit) {
         var dueDateString by remember { mutableStateOf("Select due date") }
 
         // Extract start and end dates
+
         selectedDueDate?.let {
             dueDateString = convertMillisToDate(it)
         }
@@ -161,7 +166,7 @@ fun AddTasks(onSave: (String, String, String, Long?, Boolean) -> Unit) {
                 },
                 confirmButton = {
                     TextButton(onClick = {
-                        selectedDueDate = datePickerState.selectedDateMillis
+                        selectedDueDate = datePickerState.selectedDateMillis!!
                         showDatePicker = false
                     }) {
                         Text("OK")
@@ -210,8 +215,6 @@ fun AddTasks(onSave: (String, String, String, Long?, Boolean) -> Unit) {
             )
         }
     }
-    //send the entries to dialog save button
-    onSave(title, description, selectedOption, selectedDueDate, priorityTask)
 }
 
 fun convertMillisToDate(millis: Long): String {

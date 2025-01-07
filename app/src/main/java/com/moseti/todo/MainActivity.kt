@@ -56,6 +56,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -63,8 +64,8 @@ import com.moseti.todo.ui.screens.AddTasks
 import com.moseti.todo.ui.screens.LockScreen
 import com.moseti.todo.ui.screens.SettingsScreen
 import com.moseti.todo.ui.screens.ShowTasks
-import com.moseti.todo.ui.screens.Tasks
 import com.moseti.todo.ui.theme.ToDoTheme
+import com.moseti.todo.viewmodels.AddTasksViewModel
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 
@@ -73,21 +74,6 @@ data class NavigationItem(
     val selectedIcon: ImageVector,
     val unselectedIcon: ImageVector
 )
-
-private val tasksState = mutableStateOf(TaskRepository.tasks)
-private val saveTask: (String, String, String, Long?, Boolean) -> Unit = { title, description, selectedOption, selectedDueDate, priorityTask ->
-    TaskRepository.addTask(
-        Tasks(
-            title = title,
-            description = description,
-            taskPeriod = selectedOption,
-            dueDate = selectedDueDate,
-            priority = priorityTask
-        )
-    )
-    // Notify Compose of data change
-    tasksState.value = TaskRepository.tasks
-}
 
 class MainActivity : ComponentActivity() {
 
@@ -147,7 +133,7 @@ class MainActivity : ComponentActivity() {
                                         },
                                         selected = index == selectedItemIndex,
                                         onClick = {
-                                            println("item index $index")
+                                            //println("item index $index")
                                             when(index){
                                                 0,1,2 -> navController.navigate(DisplayTasks)
                                                 3 -> navController.navigate(Settings)
@@ -231,6 +217,9 @@ class MainActivity : ComponentActivity() {
                                 )
                             }
                         ) { innerPadding ->
+                            //initialize the viewmodel
+                            val addTaskviewmodel = viewModel<AddTasksViewModel>()
+
                             // Dialog content
                             if (showDialog) {
                                 AlertDialog(
@@ -244,11 +233,12 @@ class MainActivity : ComponentActivity() {
                                         )
                                     },
                                     text = {
-                                        AddTasks(onSave = saveTask) }, // Pass your composable here
+                                        AddTasks() }, // Pass your composable here
                                     confirmButton = {
                                         FilledTonalButton(
                                             onClick = {
                                                 /*Todo save task entry*/
+                                                addTaskviewmodel.addTask()
                                                 showDialog = false
                                             },
                                             shape = RoundedCornerShape(5.dp)
@@ -267,6 +257,7 @@ class MainActivity : ComponentActivity() {
                                         FilledTonalButton(
                                             onClick = {
                                             /*TODO cancel task entry*/
+                                                navController.navigate(DisplayTasks)
                                                 showDialog = false
                                             },
                                             shape = RoundedCornerShape(5.dp)
@@ -285,10 +276,10 @@ class MainActivity : ComponentActivity() {
                                     LockScreen(innerPadding)
                                 }
                                 composable<AddTask> {
-                                    AddTasks(onSave = saveTask)
+                                    AddTasks()
                                 }
                                 composable<DisplayTasks>{
-                                    ShowTasks(tasks = tasksState.value, innerPadding)
+                                    ShowTasks(innerPadding)
                                 }
                                 composable<Settings>{
                                     SettingsScreen(innerPadding)
@@ -299,28 +290,6 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
-    }
-}
-
-object TaskRepository {
-    private val _tasks = mutableListOf<Tasks>()
-    val tasks: List<Tasks>
-        // Returns an immutable copy of the internal list
-        get() = _tasks.toList()
-
-    fun addTask(task: Tasks) {
-        // Prevent duplicates
-        if (_tasks.none { it.title == task.title }) {
-            _tasks.add(task)
-        }
-    }
-
-    fun removeTask(task: Tasks) {
-        _tasks.remove(task)
-    }
-
-    fun clearTasks() {
-        _tasks.clear()
     }
 }
 
