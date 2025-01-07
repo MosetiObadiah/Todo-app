@@ -1,5 +1,11 @@
 package com.moseti.todo.ui.screens
 
+import android.content.Context
+import android.os.Build
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -24,6 +30,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -33,14 +40,15 @@ import com.moseti.todo.viewmodels.Task
 
 @Composable
 fun ShowTasks(addTaskviewmodel: AddTasksViewModel, innerPadding: PaddingValues) {
-
+    val context = LocalContext.current
     val tasks = addTaskviewmodel.myTasks
-    println("Tasks on display : $addTaskviewmodel.myTasks")
+    VibrationEffect.createOneShot(1000, VibrationEffect.DEFAULT_AMPLITUDE)
+
     LazyColumn(
         modifier = Modifier.padding(innerPadding),
         contentPadding = PaddingValues(8.dp)
     ) {
-        items(tasks, key = { it.title + it.dueDate }) { task ->
+        items(tasks, key = { it.id }) { task ->
             TaskCard(task = task)
         }
     }

@@ -5,8 +5,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import java.util.UUID
 
 data class Task(
+    val id: UUID,
     val title: String,
     val description: String,
     val freq: String,
@@ -52,8 +54,7 @@ class AddTasksViewModel : ViewModel() {
     }
 
     fun addTask() {
-        val newTask = Task(title, description, frequency, dueDate, priority)
+        val newTask = Task(UUID.randomUUID(),title, description, frequency, dueDate, priority)
         _myTasks.add(newTask)
-        println("New task added: $newTask")
     }
 }
