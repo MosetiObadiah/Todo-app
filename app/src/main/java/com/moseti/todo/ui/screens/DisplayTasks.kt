@@ -1,10 +1,5 @@
 package com.moseti.todo.ui.screens
 
-import android.content.Context
-import android.os.Build
-import android.os.VibrationEffect
-import android.os.Vibrator
-import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -20,6 +15,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -27,6 +24,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -35,38 +35,64 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.moseti.todo.db.Task
 import com.moseti.todo.viewmodels.AddTasksViewModel
-import com.moseti.todo.viewmodels.Task
+import com.moseti.todo.viewmodels.LoginScreenViewModel
+import kotlinx.coroutines.Dispatchers
 
 @Composable
-fun ShowTasks(addTaskviewmodel: AddTasksViewModel, innerPadding: PaddingValues) {
+fun ShowTasks(
+    addTaskViewModel: AddTasksViewModel,
+    loginVmodel: LoginScreenViewModel,
+    innerPadding: PaddingValues,
+    onEditTask: (Task) -> Unit
+) {
     val context = LocalContext.current
-    val tasks = addTaskviewmodel.myTasks
-    VibrationEffect.createOneShot(1000, VibrationEffect.DEFAULT_AMPLITUDE)
+    val tasks by addTaskViewModel.tasks.collectAsState(initial = emptyList())
 
     LazyColumn(
         modifier = Modifier.padding(innerPadding),
         contentPadding = PaddingValues(8.dp)
     ) {
+
         items(tasks, key = { it.id }) { task ->
-            TaskCard(task = task)
+            TaskCard(
+                task = task,
+                onDeleteTask = { taskToDelete ->
+                    addTaskViewModel.deleteTask(taskToDelete.id, taskToDelete.ownerEmail)
+                    Toast.makeText(context, "Task deleted", Toast.LENGTH_SHORT).show()
+                },
+                onMarkCompleted = { taskToComplete ->
+                    addTaskViewModel.markTaskAsCompleted(taskToComplete.id, taskToComplete.ownerEmail)
+                    Toast.makeText(context, "Task marked as completed", Toast.LENGTH_SHORT).show()
+                },
+                onEditTask = { taskToEdit ->
+                    onEditTask(taskToEdit)
+                }
+            )
         }
     }
 }
 
 @Composable
-fun TaskCard(task: Task) {
+fun TaskCard(
+    task: Task,
+    onDeleteTask: (Task) -> Unit,
+    onMarkCompleted: (Task) -> Unit,
+    onEditTask: (Task) -> Unit
+) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(5.dp)
-            .clickable { /* Handle card click */ },
+            .clickable { onEditTask(task) }, // Navigate to edit task
         shape = RoundedCornerShape(8.dp),
         elevation = CardDefaults.cardElevation(4.dp)
     ) {
         Column(
             modifier = Modifier.padding(16.dp)
         ) {
+            // Title and Priority Icon
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -78,7 +104,7 @@ fun TaskCard(task: Task) {
                     fontWeight = FontWeight.Bold,
                     fontSize = 18.sp
                 )
-                if (task.priority == "true") {
+                if (task.priority == "High") { // Show priority icon for high-priority tasks
                     Icon(
                         imageVector = Icons.Filled.Star,
                         contentDescription = "Priority Task",
@@ -87,24 +113,44 @@ fun TaskCard(task: Task) {
                     )
                 }
             }
+
+            // Partial Description
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = task.description,
+                text = task.description.take(50) + if (task.description.length > 50) "..." else "",
                 style = MaterialTheme.typography.bodyMedium,
                 textAlign = TextAlign.Justify
             )
+
+            // Due Date and Actions
             Spacer(modifier = Modifier.height(8.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-
                 Text(
-                    text = "Due Date: ${task.dueDate.toLongOrNull()?.let { convertMillisToDate(it) }}",
+                    text = "Due Date: ${task.dueDate}",
                     style = MaterialTheme.typography.bodySmall,
                     color = Color.Gray
                 )
+                Row {
+                    // Mark as Completed
+                    Icon(
+                        imageVector = Icons.Default.Check,
+                        contentDescription = "Mark as Completed",
+                        modifier = Modifier
+                            .padding(end = 8.dp)
+                            .clickable { onMarkCompleted(task) }
+                    )
+
+                    // Delete Task
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = "Delete Task",
+                        modifier = Modifier.clickable { onDeleteTask(task) }
+                    )
+                }
             }
         }
     }

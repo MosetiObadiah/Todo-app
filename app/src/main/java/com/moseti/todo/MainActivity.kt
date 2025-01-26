@@ -1,10 +1,12 @@
 package com.moseti.todo
 
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
@@ -41,6 +43,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.material3.rememberTopAppBarState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -57,15 +61,25 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.moseti.todo.db.AppDatabase
+import com.moseti.todo.db.TaskDao
+import com.moseti.todo.db.UserDao
 import com.moseti.todo.ui.screens.AddTasks
 import com.moseti.todo.ui.screens.LockScreen
+import com.moseti.todo.ui.screens.Login
 import com.moseti.todo.ui.screens.SettingsScreen
 import com.moseti.todo.ui.screens.ShowTasks
+import com.moseti.todo.ui.screens.SignUp
 import com.moseti.todo.ui.theme.ToDoTheme
 import com.moseti.todo.viewmodels.AddTasksViewModel
+import com.moseti.todo.viewmodels.AddTasksViewModelFactory
+import com.moseti.todo.viewmodels.LoginScreenViewModel
+import com.moseti.todo.viewmodels.LoginScreenViewModelFactory
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 
@@ -75,14 +89,26 @@ data class NavigationItem(
     val unselectedIcon: ImageVector
 )
 
+var currentRoute : String? = null
+
 class MainActivity : ComponentActivity() {
+    private lateinit var userDao : UserDao
+    private lateinit var taskDao : TaskDao
 
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        val database = AppDatabase.getInstance(applicationContext)
+        userDao = database.userDao()
+        taskDao = database.taskDao()
+
         setContent {
             ToDoTheme {
+                // Create the ViewModelFactory
+                val addTaskFactory = AddTasksViewModelFactory(taskDao)
+                val loginScreenFactory = LoginScreenViewModelFactory(userDao)
                 //navController
                 val navController = rememberNavController()
 
@@ -121,8 +147,11 @@ class MainActivity : ComponentActivity() {
                     var selectedItemIndex by rememberSaveable {
                         mutableIntStateOf(0)
                     }
+                    //display sidebar, TopBar and FAB on valid route only
+                    val validRoutes = listOf("com.moseti.todo.DisplayTasks", "com.moseti.todo.Settings")
+
                     ModalNavigationDrawer(
-                        drawerContent = {
+                        drawerContent =                        {
                             //content of the drawer
                             ModalDrawerSheet {
                                 Spacer(modifier = Modifier.height(16.dp))
@@ -166,59 +195,64 @@ class MainActivity : ComponentActivity() {
                                 .fillMaxSize()
                                 .nestedScroll(scrollBehavior.nestedScrollConnection),
                             topBar = {
-                                CenterAlignedTopAppBar(
-                                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                                        containerColor = MaterialTheme.colorScheme.primaryContainer,
-                                        titleContentColor = MaterialTheme.colorScheme.primary,
-                                    ),
-                                    title = {
-                                        Text(
-                                            "ToDo",
-                                            maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis
-                                        )
-                                    },
-                                    navigationIcon = {
-                                        IconButton(onClick = {
-                                            //pull side bar
-                                            scope.launch {
-                                                drawerState.open()
-                                            }
+                                println(currentRoute)
+                                if(true) {
+                                    CenterAlignedTopAppBar(
+                                        colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                                            containerColor = MaterialTheme.colorScheme.primaryContainer,
+                                            titleContentColor = MaterialTheme.colorScheme.primary,
+                                        ),
+                                        title = {
+                                            Text(
+                                                "ToDo",
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis
+                                            )
+                                        },
+                                        navigationIcon = {
+                                            IconButton(onClick = {
+                                                //pull side bar
+                                                scope.launch {
+                                                    drawerState.open()
+                                                }
 
-                                        }) {
-                                            Icon(
-                                                imageVector = Icons.AutoMirrored.Filled.List,
-                                                contentDescription = "Localized description"
-                                            )
-                                        }
-                                    },
-                                    actions = {
-                                        IconButton(onClick = {
-                                            //info about the dev
-                                            Toast.makeText(context, "Made by Obadiah", Toast.LENGTH_SHORT).show()
-                                        }) {
-                                            Icon(
-                                                imageVector = Icons.Filled.Info,
-                                                contentDescription = "info about the developer"
-                                            )
-                                        }
-                                    },
-                                    scrollBehavior = scrollBehavior,
-                                )
+                                            }) {
+                                                Icon(
+                                                    imageVector = Icons.AutoMirrored.Filled.List,
+                                                    contentDescription = "Localized description"
+                                                )
+                                            }
+                                        },
+                                        actions = {
+                                            IconButton(onClick = {
+                                                //info about the dev
+                                                Toast.makeText(context, "Made by Obadiah", Toast.LENGTH_SHORT).show()
+                                            }) {
+                                                Icon(
+                                                    imageVector = Icons.Filled.Info,
+                                                    contentDescription = "info about the developer"
+                                                )
+                                            }
+                                        },
+                                        scrollBehavior = scrollBehavior,
+                                    )
+                                }
                             },
                             floatingActionButton = {
-
-                                ExtendedFloatingActionButton(
-                                    onClick = {
-                                        showDialog = true
-                                    },
-                                    icon = { Icon(Icons.Filled.Edit, "Add new task") },
-                                    text = { Text(text = "Add Task") },
-                                )
+                                if(true) {
+                                    ExtendedFloatingActionButton(
+                                        onClick = {
+                                            showDialog = true
+                                        },
+                                        icon = { Icon(Icons.Filled.Edit, "Add new task") },
+                                        text = { Text(text = "Add Task") }
+                                    )
+                                }
                             }
                         ) { innerPadding ->
                             //initialize the viewmodel
-                            val addTaskviewmodel = viewModel<AddTasksViewModel>()
+                            val addTasksViewModel: AddTasksViewModel = viewModel(factory = addTaskFactory)
+                            val loginViewmodel: LoginScreenViewModel = viewModel(factory = loginScreenFactory)
 
                             // Dialog content
                             if (showDialog) {
@@ -233,12 +267,13 @@ class MainActivity : ComponentActivity() {
                                         )
                                     },
                                     text = {
-                                        AddTasks() }, // Pass your composable here
+                                        AddTasks(addTasksViewModel)
+                                           },
                                     confirmButton = {
                                         FilledTonalButton(
                                             onClick = {
                                                 /*Todo save task entry*/
-                                                addTaskviewmodel.addTask()
+                                                addTasksViewModel.addTask(loginViewmodel.userEmail.value, taskDao)
                                                 showDialog = false
                                             },
                                             shape = RoundedCornerShape(5.dp)
@@ -268,18 +303,28 @@ class MainActivity : ComponentActivity() {
                                 )
                             }
 
+                            ObserveCurrentRoute(navController)
                             NavHost(
                                 navController = navController,
-                                startDestination = DisplayTasks
+                                startDestination = LoginScreen
                             ) {
                                 composable<Lock> {
                                     LockScreen(innerPadding)
                                 }
+                                composable<LoginScreen> {
+                                    Login(innerPadding, navController, loginViewmodel)
+                                }
+                                composable<SignupScreen> {
+                                    SignUp(innerPadding, navController, loginViewmodel)
+                                }
                                 composable<AddTask> {
-                                    AddTasks()
+                                    AddTasks(addTasksViewModel)
                                 }
                                 composable<DisplayTasks>{
-                                    ShowTasks(addTaskviewmodel, innerPadding)
+                                    ShowTasks(addTasksViewModel, loginViewmodel, innerPadding) {}
+                                    LaunchedEffect(Unit) {
+                                        addTasksViewModel.loadTasks(loginViewmodel.userEmail.value)
+                                    }
                                 }
                                 composable<Settings>{
                                     SettingsScreen(innerPadding)
@@ -291,7 +336,25 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+
+    @Composable
+    fun ObserveCurrentRoute(navController: NavController) {
+        LaunchedEffect(navController) {
+            navController.currentBackStackEntryFlow
+                .map { it.destination.route } // Extract the route
+                .collect { route ->
+                    Log.d("CurrentRoute", "Current route: $route") // Log the route
+                    currentRoute = route
+                }
+        }
+    }
 }
+
+@Serializable
+object SignupScreen
+
+@Serializable
+object LoginScreen
 
 @Serializable
 object Lock
