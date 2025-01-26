@@ -68,7 +68,7 @@ fun AddTasks() {
     addTaskviewmodel.updateDueDate(convertMillisToDate(selectedDueDate))
 
     var priorityTask by remember { mutableStateOf(false) }
-    addTaskviewmodel.updatePriority(priorityTask.toString())
+    addTaskviewmodel.updatePriority(priorityTask)
 
     Column{
         OutlinedTextField(
