@@ -98,6 +98,14 @@ class AddTasksViewModel(private val taskDao: TaskDao) : ViewModel() {
         updateDueDate(task.dueDate)
         updatePriority(task.priority == "High")
     }
+
+    fun clearEntries() {
+        updateTitle("")
+        updatePriority(false)
+        updateFrequency("")
+        updateDescription("")
+        updateDueDate("")
+    }
 }
 
 // ViewModel Factory

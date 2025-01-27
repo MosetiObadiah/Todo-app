@@ -1,13 +1,18 @@
 package com.moseti.todo.ui.screens
 
+import android.content.Context
 import android.widget.Toast
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -15,14 +20,16 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.moseti.todo.DisplayTasks
 import com.moseti.todo.LoginScreen
+import com.moseti.todo.R
 import com.moseti.todo.viewmodels.LoginScreenViewModel
 
 @Composable
@@ -32,7 +39,19 @@ fun SignUp(
     loginVmodel: LoginScreenViewModel
 ) {
     val context = LocalContext.current
+    Box(modifier = Modifier.fillMaxSize()) {
+        //TODO put background
+        ScreenContent(innerPadding, context, loginVmodel, navController)
+    }
 
+}
+
+@Composable
+fun ScreenContent(
+    innerPadding: PaddingValues,
+    context: Context,
+    loginVmodel: LoginScreenViewModel,
+    navController: NavHostController, ) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -62,7 +81,7 @@ fun SignUp(
             label = { Text("Password") }
         )
 
-        Spacer(modifier = Modifier.height(5.dp))
+        Spacer(modifier = Modifier.height(10.dp))
 
         // Create Account Button
         FilledTonalButton(
@@ -77,7 +96,8 @@ fun SignUp(
                     }
                 )
             },
-            modifier = Modifier.padding(vertical = 8.dp)
+            modifier = Modifier.fillMaxWidth(0.8f),
+            shape = RoundedCornerShape(5.dp)
         ) {
             Text("Create Account")
         }
