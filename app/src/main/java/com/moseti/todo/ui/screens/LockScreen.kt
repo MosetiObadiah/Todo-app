@@ -23,38 +23,34 @@ var isLocked = false
 @Composable
 fun LockScreen(innerPadding: PaddingValues) {
     Column(
-        Modifier.padding(innerPadding)
+        Modifier
+            .padding(innerPadding)
             .fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
         Icon(
             painter = painterResource(
-                if(isLocked) {
+                if (isLocked) {
                     R.drawable.locked_svgrepo_com
                 } else {
                     R.drawable.unlocked_svgrepo_com
                 }
-            ),
-            contentDescription =
-                if(isLocked) {
+            ), contentDescription = if (isLocked) {
+                "Locked"
+            } else {
+                "unlocked"
+            }, modifier = Modifier.size(40.dp, 45.dp)
+        )
+
+        OutlinedButton(onClick = {
+            //TODO trigger fingerprint if app lock is turned on
+        }) {
+            Text(
+                if (isLocked) {
                     "Locked"
                 } else {
                     "unlocked"
-                },
-            modifier = Modifier.size(40.dp, 45.dp)
-        )
-
-        OutlinedButton(
-            onClick = {
-                //TODO trigger fingerprint if app lock is turned on
-            }
-        ) {
-            Text(
-                if(isLocked) {
-                "Locked"
-                } else {
-                "unlocked"
                 }
             )
         }
@@ -66,7 +62,7 @@ fun LockScreen(innerPadding: PaddingValues) {
 fun LockScreenPreview() {
     Scaffold(
         modifier = Modifier.fillMaxSize()
-    ){innerPadding ->
+    ) { innerPadding ->
         LockScreen(innerPadding)
     }
 }

@@ -112,8 +112,7 @@ class AddTasksViewModel(private val taskDao: TaskDao) : ViewModel() {
 class AddTasksViewModelFactory(private val taskDao: TaskDao) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(AddTasksViewModel::class.java)) {
-            @Suppress("UNCHECKED_CAST")
-            return AddTasksViewModel(taskDao) as T
+            @Suppress("UNCHECKED_CAST") return AddTasksViewModel(taskDao) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

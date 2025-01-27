@@ -89,23 +89,22 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 
 data class NavigationItem(
-    val title: String,
-    val selectedIcon: ImageVector,
-    val unselectedIcon: ImageVector
+    val title: String, val selectedIcon: ImageVector, val unselectedIcon: ImageVector
 )
 
 class MainActivity : ComponentActivity() {
-    private lateinit var userDao : UserDao
-    private lateinit var taskDao : TaskDao
+    private lateinit var userDao: UserDao
+    private lateinit var taskDao: TaskDao
 
     @RequiresApi(Build.VERSION_CODES.S)
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
+
         val splashscreen = installSplashScreen()
         super.onCreate(savedInstanceState)
 
         var keepSplashScreen = true
-        splashscreen.setKeepOnScreenCondition{ keepSplashScreen }
+        splashscreen.setKeepOnScreenCondition { keepSplashScreen }
         lifecycleScope.launch {
             delay(1500)
             //TODO, load stuff here
@@ -124,35 +123,32 @@ class MainActivity : ComponentActivity() {
             ToDoTheme {
                 // Create the ViewModelFactory
                 val addTaskFactory = AddTasksViewModelFactory(taskDao)
-                val loginScreenFactory = LoginScreenViewModelFactory(userDao)
+                val loginScreenFactory = LoginScreenViewModelFactory(userDao, taskDao)
                 //navController
                 val navController = rememberNavController()
-                val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
+                val scrollBehavior =
+                    TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
                 val items = listOf(
                     NavigationItem(
                         title = "Daily",
                         selectedIcon = Icons.Filled.Home,
                         unselectedIcon = Icons.Outlined.Home
-                    ),
-                    NavigationItem(
+                    ), NavigationItem(
                         title = "Weekly",
                         selectedIcon = Icons.Filled.DateRange,
                         unselectedIcon = Icons.Outlined.DateRange
-                    ),
-                    NavigationItem(
+                    ), NavigationItem(
                         title = "Monthly",
                         selectedIcon = Icons.Filled.DateRange,
                         unselectedIcon = Icons.Outlined.DateRange
-                    ),
-                    NavigationItem(
+                    ), NavigationItem(
                         title = "Settings",
                         selectedIcon = Icons.Filled.Settings,
                         unselectedIcon = Icons.Outlined.Settings
                     )
                 )
                 Surface(
-                    Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
+                    Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background
                 ) {
                     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
                     // This state variable will be used to control the visibility of the dialog
@@ -163,22 +159,20 @@ class MainActivity : ComponentActivity() {
                         mutableIntStateOf(0)
                     }
                     //TODO display sidebar, TopBar and FAB on valid route only
-                    if(observeCurrentRoute(navController)) {
-                        Toast.makeText(this, "valid route reached", Toast.LENGTH_SHORT).show()
+                    if (observeCurrentRoute(navController)) {
                         ModalNavigationDrawer(
                             drawerContent = {
                                 ModalDrawerSheet {
                                     Log.d("Modal Drawer sheet accessed", "True")
                                     Spacer(modifier = Modifier.height(16.dp))
                                     items.forEachIndexed { index, item ->
-                                        NavigationDrawerItem(
-                                            label = {
-                                                Text(text = item.title)
-                                            },
+                                        NavigationDrawerItem(label = {
+                                            Text(text = item.title)
+                                        },
                                             selected = index == selectedItemIndex,
                                             onClick = {
-                                                when(index){
-                                                    0,1,2 -> navController.navigate(DisplayTasks)
+                                                when (index) {
+                                                    0, 1, 2 -> navController.navigate(DisplayTasks)
                                                     3 -> navController.navigate(Settings)
                                                 }
                                                 selectedItemIndex = index
@@ -194,126 +188,114 @@ class MainActivity : ComponentActivity() {
                                                     contentDescription = item.title
                                                 )
                                             },
-                                            modifier = Modifier
-                                                .padding(NavigationDrawerItemDefaults.ItemPadding)
+                                            modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
                                         )
                                     }
                                 }
-                            },
-                            drawerState = drawerState
+                            }, drawerState = drawerState
                         ) {
                             val context = LocalContext.current
                             //content of actual screen
-                            Scaffold(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .nestedScroll(scrollBehavior.nestedScrollConnection),
-                                topBar = {
-                                    CenterAlignedTopAppBar(
-                                        colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                                            containerColor = MaterialTheme.colorScheme.primaryContainer,
-                                            titleContentColor = MaterialTheme.colorScheme.primary,
-                                        ),
-                                        title = {
-                                            Text(
-                                                "ToDo",
-                                                maxLines = 1,
-                                                overflow = TextOverflow.Ellipsis
-                                            )
-                                        },
-                                        navigationIcon = {
-                                            IconButton(onClick = {
-                                                //pull side bar
-                                                scope.launch {
-                                                    drawerState.open()
-                                                }
+                            Scaffold(modifier = Modifier
+                                .fillMaxSize()
+                                .nestedScroll(scrollBehavior.nestedScrollConnection), topBar = {
+                                CenterAlignedTopAppBar(
+                                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                                        titleContentColor = MaterialTheme.colorScheme.primary,
+                                    ),
+                                    title = {
+                                        Text(
+                                            "ToDo",
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                    },
+                                    navigationIcon = {
+                                        IconButton(onClick = {
+                                            //pull side bar
+                                            scope.launch {
+                                                drawerState.open()
+                                            }
 
-                                            }) {
-                                                Icon(
-                                                    imageVector = Icons.AutoMirrored.Filled.List,
-                                                    contentDescription = "Localized description"
-                                                )
-                                            }
-                                        },
-                                        actions = {
-                                            IconButton(onClick = {
-                                                //info about the dev
-                                                Toast.makeText(context, "Made by Obadiah", Toast.LENGTH_SHORT).show()
-                                            }) {
-                                                Icon(
-                                                    imageVector = Icons.Filled.Info,
-                                                    contentDescription = "info about the developer"
-                                                )
-                                            }
-                                        },
-                                        scrollBehavior = scrollBehavior,
-                                    )
+                                        }) {
+                                            Icon(
+                                                imageVector = Icons.AutoMirrored.Filled.List,
+                                                contentDescription = "Localized description"
+                                            )
+                                        }
+                                    },
+                                    actions = {
+                                        IconButton(onClick = {
+                                            //info about the dev
+                                            Toast.makeText(
+                                                context, "Made by Obadiah", Toast.LENGTH_SHORT
+                                            ).show()
+                                        }) {
+                                            Icon(
+                                                imageVector = Icons.Filled.Info,
+                                                contentDescription = "info about the developer"
+                                            )
+                                        }
+                                    },
+                                    scrollBehavior = scrollBehavior,
+                                )
+                            }, floatingActionButton = {
+                                ExtendedFloatingActionButton(onClick = {
+                                    showDialog = true
                                 },
-                                floatingActionButton = {
-                                    ExtendedFloatingActionButton(
-                                        onClick = {
-                                            showDialog = true
-                                        },
-                                        icon = { Icon(Icons.Filled.Edit, "Add new task") },
-                                        text = { Text(text = "Add Task") }
-                                    )
-                                }
-                            ) { innerPadding ->
+                                    icon = { Icon(Icons.Filled.Edit, "Add new task") },
+                                    text = { Text(text = "Add Task") })
+                            }) { innerPadding ->
                                 //initialize the viewmodel
-                                val addTasksViewModel: AddTasksViewModel = viewModel(factory = addTaskFactory)
-                                val loginViewmodel: LoginScreenViewModel = viewModel(factory = loginScreenFactory)
+                                val addTasksViewModel: AddTasksViewModel =
+                                    viewModel(factory = addTaskFactory)
+                                val loginViewmodel: LoginScreenViewModel =
+                                    viewModel(factory = loginScreenFactory)
 
                                 // Dialog content
                                 if (showDialog) {
-                                    AlertDialog(
-                                        onDismissRequest = { showDialog = false },
-                                        title = {
-                                            Text(
-                                                "Add Task",
-                                                modifier = Modifier.padding(5.dp),
-                                                fontSize = 30.sp,
-                                                fontWeight = FontWeight.ExtraBold,
-                                            )
-                                        },
-                                        text = {
-                                            AddTasks(addTasksViewModel)
-                                        },
-                                        confirmButton = {
-                                            FilledTonalButton(
-                                                onClick = {
-                                                    /*Todo save task entry*/
-                                                    addTasksViewModel.addTask(loginViewmodel.userEmail.value, taskDao)
-                                                    showDialog = false
-                                                },
-                                                shape = RoundedCornerShape(5.dp)
-                                            ) {
-                                                Text("Save")
-                                            }
-                                        },
-                                        modifier = Modifier
-                                            .wrapContentWidth(
-                                                align = Alignment.CenterHorizontally,
-                                            )
-                                            .wrapContentHeight(
-                                                align = Alignment.CenterVertically,
-                                            ),
-                                        dismissButton = {
-                                            FilledTonalButton(
-                                                onClick = {
-                                                    addTasksViewModel.clearEntries()
-                                                    navController.navigate(DisplayTasks)
-                                                    showDialog = false
-                                                },
-                                                shape = RoundedCornerShape(5.dp)
-                                            ) {
-                                                Text("Cancel")
-                                            }
+                                    AlertDialog(onDismissRequest = { showDialog = false }, title = {
+                                        Text(
+                                            "Add Task",
+                                            modifier = Modifier.padding(5.dp),
+                                            fontSize = 30.sp,
+                                            fontWeight = FontWeight.ExtraBold,
+                                        )
+                                    }, text = {
+                                        AddTasks(addTasksViewModel)
+                                    }, confirmButton = {
+                                        FilledTonalButton(
+                                            onClick = {
+                                                /*Todo save task entry*/
+                                                addTasksViewModel.addTask(
+                                                    loginViewmodel.userEmail.value, taskDao
+                                                )
+                                                showDialog = false
+                                            }, shape = RoundedCornerShape(5.dp)
+                                        ) {
+                                            Text("Save")
                                         }
-                                    )
+                                    }, modifier = Modifier
+                                        .wrapContentWidth(
+                                            align = Alignment.CenterHorizontally,
+                                        )
+                                        .wrapContentHeight(
+                                            align = Alignment.CenterVertically,
+                                        ), dismissButton = {
+                                        FilledTonalButton(
+                                            onClick = {
+                                                addTasksViewModel.clearEntries()
+                                                navController.navigate(DisplayTasks)
+                                                showDialog = false
+                                            }, shape = RoundedCornerShape(5.dp)
+                                        ) {
+                                            Text("Cancel")
+                                        }
+                                    })
                                 }
                                 NavHost(
-                                    navController = navController,
-                                    startDestination = LoginScreen
+                                    navController = navController, startDestination = LoginScreen
                                 ) {
                                     composable<Lock> {
                                         LockScreen(innerPadding)
@@ -327,13 +309,15 @@ class MainActivity : ComponentActivity() {
                                     composable<AddTask> {
                                         AddTasks(addTasksViewModel)
                                     }
-                                    composable<DisplayTasks>{
-                                        ShowTasks(addTasksViewModel, loginViewmodel, innerPadding) {}
+                                    composable<DisplayTasks> {
+                                        ShowTasks(
+                                            addTasksViewModel, innerPadding
+                                        ) {}
                                         LaunchedEffect(Unit) {
                                             addTasksViewModel.loadTasks(loginViewmodel.userEmail.value)
                                         }
                                     }
-                                    composable<Settings>{
+                                    composable<Settings> {
                                         SettingsScreen(innerPadding)
                                     }
                                 }
@@ -341,150 +325,137 @@ class MainActivity : ComponentActivity() {
                         }
                     } else {
                         val context = LocalContext.current
-                            Scaffold(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .nestedScroll(scrollBehavior.nestedScrollConnection),
-                                topBar = {
-                                    if(observeCurrentRoute(navController)) {
-                                        Toast.makeText(this, "valid route reached", Toast.LENGTH_SHORT).show()
-                                        CenterAlignedTopAppBar(
-                                            colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                                                containerColor = MaterialTheme.colorScheme.primaryContainer,
-                                                titleContentColor = MaterialTheme.colorScheme.primary,
-                                            ),
-                                            title = {
-                                                Text(
-                                                    "ToDo",
-                                                    maxLines = 1,
-                                                    overflow = TextOverflow.Ellipsis
-                                                )
-                                            },
-                                            navigationIcon = {
-                                                IconButton(onClick = {
-                                                    //pull side bar
-                                                    scope.launch {
-                                                        drawerState.open()
-                                                    }
-
-                                                }) {
-                                                    Icon(
-                                                        imageVector = Icons.AutoMirrored.Filled.List,
-                                                        contentDescription = "Localized description"
-                                                    )
-                                                }
-                                            },
-                                            actions = {
-                                                IconButton(onClick = {
-                                                    //info about the dev
-                                                    Toast.makeText(context, "Made by Obadiah", Toast.LENGTH_SHORT).show()
-                                                }) {
-                                                    Icon(
-                                                        imageVector = Icons.Filled.Info,
-                                                        contentDescription = "info about the developer"
-                                                    )
-                                                }
-                                            },
-                                            scrollBehavior = scrollBehavior,
+                        Scaffold(modifier = Modifier
+                            .fillMaxSize()
+                            .nestedScroll(scrollBehavior.nestedScrollConnection), topBar = {
+                            if (observeCurrentRoute(navController)) {
+                                CenterAlignedTopAppBar(
+                                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                                        titleContentColor = MaterialTheme.colorScheme.primary,
+                                    ),
+                                    title = {
+                                        Text(
+                                            "ToDo",
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
                                         )
-                                    }
+                                    },
+                                    navigationIcon = {
+                                        IconButton(onClick = {
+                                            //pull side bar
+                                            scope.launch {
+                                                drawerState.open()
+                                            }
+
+                                        }) {
+                                            Icon(
+                                                imageVector = Icons.AutoMirrored.Filled.List,
+                                                contentDescription = "Localized description"
+                                            )
+                                        }
+                                    },
+                                    actions = {
+                                        IconButton(onClick = {
+                                            //info about the dev
+                                            Toast.makeText(
+                                                context, "Made by Obadiah", Toast.LENGTH_SHORT
+                                            ).show()
+                                        }) {
+                                            Icon(
+                                                imageVector = Icons.Filled.Info,
+                                                contentDescription = "info about the developer"
+                                            )
+                                        }
+                                    },
+                                    scrollBehavior = scrollBehavior,
+                                )
+                            }
+                        }, floatingActionButton = {
+                            if (observeCurrentRoute(navController)) {
+                                Toast.makeText(
+                                    this, "valid route reached", Toast.LENGTH_SHORT
+                                ).show()
+                                ExtendedFloatingActionButton(onClick = {
+                                    showDialog = true
                                 },
-                                floatingActionButton = {
-                                    if(observeCurrentRoute(navController)) {
-                                        Toast.makeText(
-                                            this,
-                                            "valid route reached",
-                                            Toast.LENGTH_SHORT
-                                        ).show()
-                                        ExtendedFloatingActionButton(
-                                            onClick = {
-                                                showDialog = true
-                                            },
-                                            icon = { Icon(Icons.Filled.Edit, "Add new task") },
-                                            text = { Text(text = "Add Task") }
-                                        )
-                                    }
-                                }
-                            ) { innerPadding ->
-                                //initialize the viewmodel
-                                val addTasksViewModel: AddTasksViewModel = viewModel(factory = addTaskFactory)
-                                val loginViewmodel: LoginScreenViewModel = viewModel(factory = loginScreenFactory)
+                                    icon = { Icon(Icons.Filled.Edit, "Add new task") },
+                                    text = { Text(text = "Add Task") })
+                            }
+                        }) { innerPadding ->
+                            //initialize the viewmodel
+                            val addTasksViewModel: AddTasksViewModel =
+                                viewModel(factory = addTaskFactory)
+                            val loginViewmodel: LoginScreenViewModel =
+                                viewModel(factory = loginScreenFactory)
 
-                                // Dialog content
-                                if (showDialog) {
-                                    AlertDialog(
-                                        onDismissRequest = { showDialog = false },
-                                        title = {
-                                            Text(
-                                                "Add Task",
-                                                modifier = Modifier.padding(5.dp),
-                                                fontSize = 30.sp,
-                                                fontWeight = FontWeight.ExtraBold,
-                                            )
-                                        },
-                                        text = {
-                                            AddTasks(addTasksViewModel)
-                                        },
-                                        confirmButton = {
-                                            FilledTonalButton(
-                                                onClick = {
-                                                    /*Todo save task entry*/
-                                                    addTasksViewModel.addTask(loginViewmodel.userEmail.value, taskDao)
-                                                    showDialog = false
-                                                },
-                                                shape = RoundedCornerShape(5.dp)
-                                            ) {
-                                                Text("Save")
-                                            }
-                                        },
-                                        modifier = Modifier
-                                            .wrapContentWidth(
-                                                align = Alignment.CenterHorizontally,
-                                            )
-                                            .wrapContentHeight(
-                                                align = Alignment.CenterVertically,
-                                            ),
-                                        dismissButton = {
-                                            FilledTonalButton(
-                                                onClick = {
-                                                    addTasksViewModel.clearEntries()
-                                                    navController.navigate(DisplayTasks)
-                                                    showDialog = false
-                                                },
-                                                shape = RoundedCornerShape(5.dp)
-                                            ) {
-                                                Text("Cancel")
-                                            }
-                                        }
+                            // Dialog content
+                            if (showDialog) {
+                                AlertDialog(onDismissRequest = { showDialog = false }, title = {
+                                    Text(
+                                        "Add Task",
+                                        modifier = Modifier.padding(5.dp),
+                                        fontSize = 30.sp,
+                                        fontWeight = FontWeight.ExtraBold,
                                     )
+                                }, text = {
+                                    AddTasks(addTasksViewModel)
+                                }, confirmButton = {
+                                    FilledTonalButton(
+                                        onClick = {
+                                            /*Todo save task entry*/
+                                            addTasksViewModel.addTask(
+                                                loginViewmodel.userEmail.value, taskDao
+                                            )
+                                            showDialog = false
+                                        }, shape = RoundedCornerShape(5.dp)
+                                    ) {
+                                        Text("Save")
+                                    }
+                                }, modifier = Modifier
+                                    .wrapContentWidth(
+                                        align = Alignment.CenterHorizontally,
+                                    )
+                                    .wrapContentHeight(
+                                        align = Alignment.CenterVertically,
+                                    ), dismissButton = {
+                                    FilledTonalButton(
+                                        onClick = {
+                                            addTasksViewModel.clearEntries()
+                                            navController.navigate(DisplayTasks)
+                                            showDialog = false
+                                        }, shape = RoundedCornerShape(5.dp)
+                                    ) {
+                                        Text("Cancel")
+                                    }
+                                })
+                            }
+                            NavHost(
+                                navController = navController, startDestination = LoginScreen
+                            ) {
+                                composable<Lock> {
+                                    LockScreen(innerPadding)
                                 }
-                                NavHost(
-                                    navController = navController,
-                                    startDestination = LoginScreen
-                                ) {
-                                    composable<Lock> {
-                                        LockScreen(innerPadding)
+                                composable<LoginScreen> {
+                                    Login(innerPadding, navController, loginViewmodel)
+                                }
+                                composable<SignupScreen> {
+                                    SignUp(innerPadding, navController, loginViewmodel)
+                                }
+                                composable<AddTask> {
+                                    AddTasks(addTasksViewModel)
+                                }
+                                composable<DisplayTasks> {
+                                    ShowTasks(addTasksViewModel, innerPadding) {}
+                                    LaunchedEffect(Unit) {
+                                        addTasksViewModel.loadTasks(loginViewmodel.userEmail.value)
                                     }
-                                    composable<LoginScreen> {
-                                        Login(innerPadding, navController, loginViewmodel)
-                                    }
-                                    composable<SignupScreen> {
-                                        SignUp(innerPadding, navController, loginViewmodel)
-                                    }
-                                    composable<AddTask> {
-                                        AddTasks(addTasksViewModel)
-                                    }
-                                    composable<DisplayTasks>{
-                                        ShowTasks(addTasksViewModel, loginViewmodel, innerPadding) {}
-                                        LaunchedEffect(Unit) {
-                                            addTasksViewModel.loadTasks(loginViewmodel.userEmail.value)
-                                        }
-                                    }
-                                    composable<Settings>{
-                                        SettingsScreen(innerPadding)
-                                    }
+                                }
+                                composable<Settings> {
+                                    SettingsScreen(innerPadding)
                                 }
                             }
+                        }
 
                     }
                 }
@@ -496,12 +467,10 @@ class MainActivity : ComponentActivity() {
     fun observeCurrentRoute(navController: NavController): Boolean {
         val currentRoute = remember { mutableStateOf<String?>(null) }
         LaunchedEffect(navController) {
-            navController.currentBackStackEntryFlow
-                .map { it.destination.route }
-                .collect { route ->
-                    Log.d("CurrentRoute", "Route is: $route")
-                    currentRoute.value = route
-                }
+            navController.currentBackStackEntryFlow.map { it.destination.route }.collect { route ->
+                Log.d("CurrentRoute", "Route is: $route")
+                currentRoute.value = route
+            }
         }
         return currentRoute.value == "com.moseti.todo.DisplayTasks"
     }

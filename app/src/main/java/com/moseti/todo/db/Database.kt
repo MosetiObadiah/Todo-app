@@ -1,27 +1,28 @@
 package com.moseti.todo.db
 
-import androidx.room.*
-import java.util.*
+import androidx.room.Embedded
+import androidx.room.Entity
+import androidx.room.ForeignKey
+import androidx.room.Index
+import androidx.room.PrimaryKey
+import androidx.room.Relation
+import androidx.room.TypeConverter
+import java.util.UUID
 
 @Entity(
-    tableName = "Netizen",
-    indices = [Index(value = ["email"], unique = true)]
+    tableName = "Netizen", indices = [Index(value = ["email"], unique = true)]
 )
 data class User(
-    @PrimaryKey(autoGenerate = true) val id: Long = 0,
-    val email: String,
-    val password: String
+    @PrimaryKey(autoGenerate = true) val id: Long = 0, val email: String, val password: String
 )
 
 @Entity(
-    tableName = "Tasks",
-    foreignKeys = [ForeignKey(
+    tableName = "Tasks", foreignKeys = [ForeignKey(
         entity = User::class,
         parentColumns = ["email"],
         childColumns = ["ownerEmail"],
         onDelete = ForeignKey.CASCADE
-    )],
-    indices = [Index(value = ["ownerEmail"])]
+    )], indices = [Index(value = ["ownerEmail"])]
 )
 data class Task(
     @PrimaryKey val id: UUID = UUID.randomUUID(),
@@ -34,12 +35,9 @@ data class Task(
 )
 
 data class UserWithTasks(
-    @Embedded val user: User,
-    @Relation(
-        parentColumn = "email",
-        entityColumn = "ownerEmail"
-    )
-    val tasks: List<Task>
+    @Embedded val user: User, @Relation(
+        parentColumn = "email", entityColumn = "ownerEmail"
+    ) val tasks: List<Task>
 )
 
 class Converters {

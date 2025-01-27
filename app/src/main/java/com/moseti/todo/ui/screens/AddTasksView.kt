@@ -38,7 +38,6 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.moseti.todo.viewmodels.AddTasksViewModel
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -69,13 +68,14 @@ fun AddTasks(addTaskviewmodel: AddTasksViewModel) {
     var priorityTask by remember { mutableStateOf(false) }
     addTaskviewmodel.updatePriority(priorityTask)
 
-    Column{
+    Column {
         OutlinedTextField(
             value = title,
             onValueChange = {
                 title = it
             },
-            modifier = Modifier.padding(5.dp, 5.dp, 5.dp, 0.dp)
+            modifier = Modifier
+                .padding(5.dp, 5.dp, 5.dp, 0.dp)
                 .fillMaxWidth(),
             label = { Text("Title") }
         )
@@ -83,8 +83,10 @@ fun AddTasks(addTaskviewmodel: AddTasksViewModel) {
         OutlinedTextField(
             value = description,
             onValueChange = {
-                description = it },
-            modifier = Modifier.padding(5.dp, 0.dp, 5.dp, 0.dp)
+                description = it
+            },
+            modifier = Modifier
+                .padding(5.dp, 0.dp, 5.dp, 0.dp)
                 .fillMaxWidth(),
             label = { Text("Description") }
         )
@@ -92,7 +94,8 @@ fun AddTasks(addTaskviewmodel: AddTasksViewModel) {
         Row(
             horizontalArrangement = Arrangement.Start,
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
                 .selectableGroup()
         ) {
             radioOptions.forEach { text ->
@@ -122,7 +125,8 @@ fun AddTasks(addTaskviewmodel: AddTasksViewModel) {
 
         Button(
             onClick = { showDatePicker = true },
-            modifier = Modifier.padding(5.dp)
+            modifier = Modifier
+                .padding(5.dp)
                 .fillMaxWidth(),
             shape = RoundedCornerShape(4.dp)
         ) {
@@ -138,7 +142,8 @@ fun AddTasks(addTaskviewmodel: AddTasksViewModel) {
             dueDateString = convertMillisToDate(it)
         }
 
-        Row(modifier = Modifier.fillMaxWidth(),
+        Row(
+            modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -184,7 +189,8 @@ fun AddTasks(addTaskviewmodel: AddTasksViewModel) {
         }
 
         Row(
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
                 .padding(5.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically

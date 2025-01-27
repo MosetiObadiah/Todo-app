@@ -8,7 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 
 @Composable
-fun SettingsScreen(innerPadding : PaddingValues) {
+fun SettingsScreen(innerPadding: PaddingValues) {
     Column(
         Modifier.padding(innerPadding)
     ) {
