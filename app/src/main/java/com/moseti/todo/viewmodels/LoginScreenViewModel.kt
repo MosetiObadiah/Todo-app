@@ -14,8 +14,8 @@ import java.util.UUID
 class LoginScreenViewModel(private val userDao: UserDao, private val taskDao: TaskDao) :
     ViewModel() {
 
-    var userEmail = mutableStateOf("")
-    var userPassword = mutableStateOf("")
+    var userEmail = mutableStateOf("moseti")
+    var userPassword = mutableStateOf("1234")
 
     fun signUp(onSuccess: () -> Unit, onError: (String) -> Unit) {
         viewModelScope.launch {

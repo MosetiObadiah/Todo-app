@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Update
 import java.util.UUID
 
 @Dao
@@ -25,4 +26,7 @@ interface TaskDao {
 
     @Query("SELECT * FROM Tasks WHERE id = :taskId")
     suspend fun getTaskById(taskId: UUID): Task?
+
+    @Update
+    suspend fun updateTask(task: Task)
 }

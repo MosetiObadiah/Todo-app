@@ -18,6 +18,12 @@ class AddTasksViewModel(private val taskDao: TaskDao) : ViewModel() {
     private val _tasks = MutableStateFlow<List<Task>>(emptyList())
     val tasks: StateFlow<List<Task>> get() = _tasks
 
+    var currentTaskId by mutableStateOf<UUID?>(null)
+        private set
+
+    var isEditing by mutableStateOf(false)
+        private set
+
     var title by mutableStateOf("")
         private set
     var description by mutableStateOf("")
@@ -56,6 +62,43 @@ class AddTasksViewModel(private val taskDao: TaskDao) : ViewModel() {
         }
     }
 
+    fun saveTask(ownerEmail: String) {
+        viewModelScope.launch {
+            val task = Task(
+                id = currentTaskId ?: UUID.randomUUID(), // Use existing ID if editing
+                ownerEmail = ownerEmail,
+                title = title,
+                description = description,
+                freq = frequency,
+                dueDate = dueDate,
+                priority = if (priority) "High" else "Low"
+            )
+            taskDao.insertTask(task) // Insert or update the task
+            loadTasks(ownerEmail) // Reload tasks
+            clearEntries()
+            if (isEditing) {
+                resetEditingState() // Reset editing state after saving
+            }
+        }
+    }
+
+    fun startEditing(task: Task) {
+        currentTaskId = task.id
+        isEditing = true
+        // Populate fields with task data
+        title = task.title
+        description = task.description
+        frequency = task.freq
+        dueDate = task.dueDate
+        priority = task.priority == "High"
+    }
+
+    private fun resetEditingState() {
+        currentTaskId = null
+        isEditing = false
+        clearEntries()
+    }
+
     // Add a task to the database or task list
     fun addTask(ownerEmail: String, taskDao: TaskDao) {
         viewModelScope.launch {
@@ -80,6 +123,10 @@ class AddTasksViewModel(private val taskDao: TaskDao) : ViewModel() {
         }
     }
 
+    fun archiveTask(id: UUID, ownerEmail: String) {
+
+    }
+
     fun markTaskAsCompleted(taskId: UUID, email: String) {
         viewModelScope.launch(Dispatchers.IO) {
             val task = taskDao.getTaskById(taskId)
@@ -100,11 +147,13 @@ class AddTasksViewModel(private val taskDao: TaskDao) : ViewModel() {
     }
 
     fun clearEntries() {
-        updateTitle("")
-        updatePriority(false)
-        updateFrequency("")
-        updateDescription("")
-        updateDueDate("")
+        title = ""
+        description = ""
+        frequency = "daily"
+        dueDate = ""
+        priority = false
+        currentTaskId = null
+        isEditing = false
     }
 }
 

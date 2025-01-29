@@ -98,13 +98,15 @@ fun Login(
         // Login Button
         FilledTonalButton(
             onClick = {
-                loginVmodel.login(onSuccess = {
-                    // Navigate to tasks screen on success
-                    navController.navigate(DisplayTasks)
-                }, onError = { errorMessage ->
-                    // Show toast with error message
-                    Toast.makeText(context, errorMessage, Toast.LENGTH_SHORT).show()
-                })
+                if (loginVmodel.userEmail.value.isNotEmpty()) {
+                    loginVmodel.login(onSuccess = {
+                        navController.navigate(DisplayTasks)
+                    }, onError = { errorMessage ->
+                        Toast.makeText(context, errorMessage, Toast.LENGTH_SHORT).show()
+                    })
+                } else {
+                    Toast.makeText(context, "Email cannot be empty", Toast.LENGTH_SHORT).show()
+                }
             }, modifier = Modifier.fillMaxWidth(0.8f), shape = RoundedCornerShape(5.dp)
         ) {
             Text("Login")

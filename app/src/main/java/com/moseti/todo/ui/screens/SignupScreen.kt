@@ -121,13 +121,17 @@ fun ScreenContent(
         // Create Account Button
         FilledTonalButton(
             onClick = {
-                loginVmodel.signUp(onSuccess = {
-                    Toast.makeText(context, "Account created successfully!", Toast.LENGTH_SHORT)
-                        .show()
-                    navController.navigate(DisplayTasks)
-                }, onError = { error ->
-                    Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
-                })
+                if (loginVmodel.userEmail.value.isNotEmpty()) {
+                    loginVmodel.signUp(onSuccess = {
+                        navController.navigate(DisplayTasks)
+                        Toast.makeText(context, "Account created successfully!", Toast.LENGTH_SHORT)
+                            .show()
+                    }, onError = { error ->
+                        Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
+                    })
+                } else {
+                    Toast.makeText(context, "Email cannot be empty", Toast.LENGTH_SHORT).show()
+                }
             }, modifier = Modifier.fillMaxWidth(0.8f), shape = RoundedCornerShape(5.dp)
         ) {
             Text("Create Account")

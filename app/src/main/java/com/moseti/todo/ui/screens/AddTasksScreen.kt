@@ -27,6 +27,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -45,34 +46,38 @@ import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AddTasks(addTaskviewmodel: AddTasksViewModel) {
-
-    var title by remember { mutableStateOf("") }
-    addTaskviewmodel.updateTitle(title)
-
-    var description by remember { mutableStateOf("") }
-    addTaskviewmodel.updateDescription(description)
-
+fun AddTasks(
+    addTaskviewmodel: AddTasksViewModel,
+    onSave: () -> Unit
+) {
     val radioOptions = listOf("daily", "weekly", "monthly")
-    var selectedOption by remember { mutableStateOf(radioOptions[0]) }
-    addTaskviewmodel.updateFrequency(selectedOption)
+    val selectedFrequency = addTaskviewmodel.frequency
 
-    // State to control the visibility of the DateRangePickerModal
     var showDatePicker by remember { mutableStateOf(false) }
     // State to hold the selected date range
     // Set default due date as current date
     val currentDateMillis = System.currentTimeMillis()
-    var selectedDueDate by remember { mutableLongStateOf(currentDateMillis) }
-    addTaskviewmodel.updateDueDate(convertMillisToDate(selectedDueDate))
+    // Convert ViewModel's string date to millis
+    val initialDate = try {
+        SimpleDateFormat("MM/dd/yyyy", Locale.getDefault())
+            .parse(addTaskviewmodel.dueDate)
+            ?.time ?: System.currentTimeMillis()
+    } catch (e: Exception) {
+        System.currentTimeMillis()
+    }
 
-    var priorityTask by remember { mutableStateOf(false) }
-    addTaskviewmodel.updatePriority(priorityTask)
+    var selectedDueDate by remember { mutableLongStateOf(initialDate) }
+
+    // Update both states when date changes
+    LaunchedEffect(selectedDueDate) {
+        addTaskviewmodel.updateDueDate(convertMillisToDate(selectedDueDate))
+    }
 
     Column {
         OutlinedTextField(
-            value = title,
+            value = addTaskviewmodel.title,
             onValueChange = {
-                title = it
+                addTaskviewmodel.updateTitle(it)
             },
             modifier = Modifier
                 .padding(5.dp, 5.dp, 5.dp, 0.dp)
@@ -81,9 +86,9 @@ fun AddTasks(addTaskviewmodel: AddTasksViewModel) {
         )
 
         OutlinedTextField(
-            value = description,
+            value = addTaskviewmodel.description,
             onValueChange = {
-                description = it
+                addTaskviewmodel.updateDescription(it)
             },
             modifier = Modifier
                 .padding(5.dp, 0.dp, 5.dp, 0.dp)
@@ -103,16 +108,16 @@ fun AddTasks(addTaskviewmodel: AddTasksViewModel) {
                     Modifier
                         .height(56.dp)
                         .selectable(
-                            selected = (text == selectedOption),
-                            onClick = { selectedOption = text },
+                            selected = (text == addTaskviewmodel.frequency),
+                            onClick = { addTaskviewmodel.updateFrequency(text) },
                             role = Role.RadioButton
                         )
                         .padding(bottom = 4.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     RadioButton(
-                        selected = (text == selectedOption),
-                        onClick = null // null for accessibility with screen readers
+                        selected = (text == addTaskviewmodel.frequency),
+                        onClick = null
                     )
                     Text(
                         text = text,
@@ -133,31 +138,13 @@ fun AddTasks(addTaskviewmodel: AddTasksViewModel) {
             Text("Due Date")
         }
 
-        // State to hold formatted date string
-        var dueDateString by remember { mutableStateOf("Select due date") }
-
-        // Extract start and end dates
-
-        selectedDueDate.let {
-            dueDateString = convertMillisToDate(it)
-        }
-
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            OutlinedTextField(
-                value = dueDateString,
-                onValueChange = { /*Read only*/ },
-                modifier = Modifier
-                    .padding(5.dp)
-                    .weight(1f)
-                    .clickable {
-                        showDatePicker = true
-                    },
-                readOnly = true,
-                label = { Text("due date") }
+            Text(
+                text = "Due date " + addTaskviewmodel.dueDate.toString()
             )
         }
 
@@ -202,11 +189,11 @@ fun AddTasks(addTaskviewmodel: AddTasksViewModel) {
             )
 
             Switch(
-                checked = priorityTask,
+                checked = addTaskviewmodel.priority,
                 onCheckedChange = {
-                    priorityTask = it
+                    addTaskviewmodel.updatePriority(it)
                 },
-                thumbContent = if (priorityTask) {
+                thumbContent = if (addTaskviewmodel.priority) {
                     {
                         Icon(
                             imageVector = Icons.Filled.Check,
